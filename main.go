@@ -4,8 +4,9 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/urfave/cli"
 	"github.com/mrtc0/noic/cmd"
+	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 var (
@@ -48,10 +49,18 @@ func main() {
 	}
 
 	app.Before = func(context *cli.Context) error {
+		setupLogger(context)
 		return nil
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		os.Exit(1)
+		logrus.Fatal(err)
 	}
+}
+
+func setupLogger(context *cli.Context) error {
+	if context.GlobalBool("debug") {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+	return nil
 }

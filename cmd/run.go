@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/mrtc0/noic/pkg/container"
 	"github.com/urfave/cli"
 )
 
@@ -20,6 +21,10 @@ Where "<rootfs>" is your container rootfs directory.
 		},
 	},
 	Action: func(context *cli.Context) error {
+		err := container.StartContainer(context)
+		if err != nil {
+			return err
+		}
 		return nil
 	},
 }
