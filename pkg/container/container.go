@@ -1,6 +1,7 @@
 package container
 
 import (
+	"github.com/mrtc0/noic/pkg/process"
 	"github.com/sirupsen/logrus"
 )
 
@@ -10,7 +11,22 @@ type Container struct {
 }
 
 func (c *Container) Run() {
-	logrus.Debug("Run")
+	logrus.Info("Run")
+	// s := specs.SetupSpec()
+
+	cmd, writePipe, err := process.NewParentProcess()
+	if err != nil {
+		logrus.Error("Failed")
+	}
+
+	if err := cmd.Start(); err != nil {
+		logrus.Error(err)
+	}
+
+	writePipe.WriteString("ps aux")
+	writePipe.Close()
+
+	cmd.Wait()
 }
 
 // Container Status
