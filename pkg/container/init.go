@@ -1,7 +1,9 @@
 package container
 
 import (
+	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 
@@ -9,9 +11,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-func Init(ctx *cli.Context) error {
-	command := []string{"/bin/sleep", "30"}
-	hostname := "sandbox"
+func Init(ctx *cli.Context, pipe *os.File) error {
+	var container *Container
+	if err := json.NewDecoder(pipe).Decode(&container); err != nil {
+		return err
+	}
+	command := container.Spec.Process.Args
+	hostname := container.Spec.Hostname
 
 	if err := syscall.Sethostname([]byte(hostname)); err != nil {
 		return err
@@ -22,7 +28,12 @@ func Init(ctx *cli.Context) error {
 		return err
 	}
 
-	if err := syscall.Exec(command[0], command[0:], []string{}); err != nil {
+	path, err := exec.LookPath(command[0])
+	if err != nil {
+		return err
+	}
+
+	if err := syscall.Exec(path, command[0:], container.Spec.Process.Env); err != nil {
 		return err
 	}
 

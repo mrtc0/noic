@@ -1,32 +1,48 @@
 package container
 
 import (
+	"encoding/json"
+
 	"github.com/mrtc0/noic/pkg/process"
+	"github.com/mrtc0/noic/pkg/specs"
 	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 type Container struct {
-	rootfs string
-	state  Status
+	ID    string
+	Root  string
+	State Status
+	Spec  *specs.Spec
+}
+
+func newContainer(context *cli.Context, id string, spec *specs.Spec) (*Container, error) {
+	factory, err := loadFactory(context)
+	if err != nil {
+		return nil, err
+	}
+
+	return factory.Create(id, spec)
 }
 
 func (c *Container) Run() {
-	logrus.Info("Run")
-	// s := specs.SetupSpec()
-
-	cmd, writePipe, err := process.NewParentProcess()
+	parent, writePipe, err := process.NewParentProcess(c.Root, c.Spec.Process.Env)
 	if err != nil {
 		logrus.Error("Failed")
 	}
 
-	if err := cmd.Start(); err != nil {
+	if err := parent.Start(); err != nil {
 		logrus.Error(err)
 	}
 
-	writePipe.WriteString("ps aux")
+	b, err := json.Marshal(c)
+	if err != nil {
+		logrus.Error(err)
+	}
+	writePipe.Write(b)
 	writePipe.Close()
 
-	cmd.Wait()
+	parent.Wait()
 }
 
 // Container Status

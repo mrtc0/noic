@@ -5,21 +5,8 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/mrtc0/noic/pkg/specs"
 	"github.com/sirupsen/logrus"
 )
-
-type Process struct {
-	Args []string
-}
-
-func NewProcess(p *specs.Process) (*Process, error) {
-	lp := &Process{
-		Args: p.Args,
-	}
-
-	return lp, nil
-}
 
 func newPipe() (*os.File, *os.File, error) {
 	r, w, err := os.Pipe()
@@ -30,7 +17,7 @@ func newPipe() (*os.File, *os.File, error) {
 	return r, w, nil
 }
 
-func NewParentProcess() (*exec.Cmd, *os.File, error) {
+func NewParentProcess(rootfs string, env []string) (*exec.Cmd, *os.File, error) {
 	readPipe, writePipe, err := newPipe()
 	if err != nil {
 		return nil, nil, err
@@ -53,7 +40,8 @@ func NewParentProcess() (*exec.Cmd, *os.File, error) {
 
 	cmd.ExtraFiles = []*os.File{readPipe}
 
-	cmd.Dir = "/home/mrtc0/tmp/rootfs"
+	cmd.Dir = rootfs
+	cmd.Env = append(os.Environ(), env...)
 
 	return cmd, writePipe, nil
 }

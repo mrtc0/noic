@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/mrtc0/noic/pkg/container"
 	"github.com/urfave/cli"
 )
@@ -9,8 +12,11 @@ var InitCommand = cli.Command{
 	Name:  "init",
 	Usage: "init container process",
 	Action: func(context *cli.Context) error {
-		err := container.Init(context)
+		pipe := os.NewFile(uintptr(3), "pipe")
+		defer pipe.Close()
+		err := container.Init(context, pipe)
 		if err != nil {
+			fmt.Println("init error")
 			return err
 		}
 		return nil

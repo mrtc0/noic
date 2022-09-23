@@ -21,7 +21,7 @@ Where "<rootfs>" is your container rootfs directory.
 		},
 	},
 	Action: func(context *cli.Context) error {
-		err := container.StartContainer(context)
+		err := container.Start(context)
 		if err != nil {
 			return err
 		}
