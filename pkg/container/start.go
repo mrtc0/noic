@@ -1,9 +1,7 @@
 package container
 
 import (
-	"encoding/json"
 	"errors"
-	"os"
 
 	"github.com/urfave/cli"
 )
@@ -14,19 +12,7 @@ func Start(context *cli.Context) error {
 		return errors.New("container id cannnot be empty")
 	}
 
-	path, err := StateFilePath(id)
-	if err != nil {
-		return err
-	}
-
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	var container *Container
-	json.Unmarshal(raw, &container)
-	c, err := Create(context)
+	c, err := FindByID(id)
 	if err != nil {
 		return err
 	}

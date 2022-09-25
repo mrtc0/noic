@@ -51,6 +51,7 @@ func main() {
 		cmd.RunCommand,
 		cmd.ListCommand,
 		cmd.DeleteCommand,
+		cmd.StateCommand,
 	}
 
 	app.Before = func(context *cli.Context) error {

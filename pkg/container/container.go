@@ -2,6 +2,8 @@ package container
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
 
 	"github.com/mrtc0/noic/pkg/process"
 	"github.com/mrtc0/noic/pkg/specs"
@@ -14,6 +16,26 @@ type Container struct {
 	Root  string
 	State Status
 	Spec  *specs.Spec
+}
+
+func FindByID(id string) (*Container, error) {
+	path, err := StateFilePath(id)
+	if err != nil {
+		logrus.Debug(err)
+		return nil, fmt.Errorf("container %s does not exists", id)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var container *Container
+	if err = json.Unmarshal(raw, &container); err != nil {
+		return nil, err
+	}
+
+	return container, nil
 }
 
 func newContainer(context *cli.Context, id string, spec *specs.Spec) (*Container, error) {
