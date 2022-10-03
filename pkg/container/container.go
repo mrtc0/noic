@@ -11,11 +11,14 @@ import (
 	"github.com/urfave/cli"
 )
 
+const execFifoFilename = "exec.fifo"
+
 type Container struct {
-	ID    string
-	Root  string
-	State Status
-	Spec  *specs.Spec
+	ID           string
+	Root         string
+	ExecFifoPath string
+	State        Status
+	Spec         *specs.Spec
 }
 
 func FindByID(id string) (*Container, error) {
@@ -63,8 +66,6 @@ func (c *Container) Run() {
 	}
 	writePipe.Write(b)
 	writePipe.Close()
-
-	parent.Wait()
 }
 
 // Container Status

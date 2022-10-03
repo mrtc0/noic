@@ -2,6 +2,7 @@ package container
 
 import (
 	"errors"
+	"os"
 
 	"github.com/urfave/cli"
 )
@@ -17,7 +18,14 @@ func Start(context *cli.Context) error {
 		return err
 	}
 
-	c.Run()
+	_, err = os.OpenFile(c.ExecFifoPath, os.O_RDONLY, 0)
+	if err != nil {
+		return err
+	}
+
+	if err = os.Remove(c.ExecFifoPath); err != nil {
+		return err
+	}
 
 	return nil
 }

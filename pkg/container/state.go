@@ -30,7 +30,7 @@ func StateDirPath(id string) (string, error) {
 	return path, nil
 }
 
-func saveState(container *Container) error {
+func saveStateFile(container *Container) error {
 	path, err := StateFilePath(container.ID)
 	if err != nil {
 		return err

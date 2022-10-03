@@ -20,10 +20,12 @@ Where "<container-id>" is your name for instance of the container.
 		},
 	},
 	Action: func(context *cli.Context) error {
-		_, err := container.Create(context)
+		c, err := container.Create(context)
 		if err != nil {
 			return err
 		}
+
+		c.Run()
 
 		return nil
 	},

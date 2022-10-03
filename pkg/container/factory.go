@@ -1,6 +1,7 @@
 package container
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -24,10 +25,12 @@ func (f *ContainerFactory) Create(id string, spec *specs.Spec) (*Container, erro
 	containerRoot := filepath.Join(p, spec.Root.Path)
 	_, err = os.Stat(containerRoot)
 	if os.IsNotExist(err) {
-		return nil, err
+		return nil, fmt.Errorf("container root directory does not exists: %v", err)
 	}
 
-	c := &Container{ID: id, Root: containerRoot, Spec: spec}
+	execFifoPath := filepath.Join(StateDir, id, execFifoFilename)
+
+	c := &Container{ID: id, Root: containerRoot, ExecFifoPath: execFifoPath, Spec: spec}
 	c.State = Created
 
 	return c, nil

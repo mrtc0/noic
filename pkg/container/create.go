@@ -2,6 +2,7 @@ package container
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/mrtc0/noic/pkg/specs"
@@ -28,11 +29,11 @@ func Create(context *cli.Context) (*Container, error) {
 
 	container, err := newContainer(context, id, spec)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed create container: %v", err)
 	}
 
-	if err = saveState(container); err != nil {
-		return nil, err
+	if err = saveStateFile(container); err != nil {
+		return nil, fmt.Errorf("failed save state: %v", err)
 	}
 
 	return container, err

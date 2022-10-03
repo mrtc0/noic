@@ -2,6 +2,7 @@ package container
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+	"golang.org/x/sys/unix"
 )
 
 func Init(ctx *cli.Context, pipe *os.File) error {
@@ -16,6 +18,11 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 	if err := json.NewDecoder(pipe).Decode(&container); err != nil {
 		return err
 	}
+
+	if err := awaitStart(container.ExecFifoPath); err != nil {
+		return err
+	}
+
 	command := container.Spec.Process.Args
 	hostname := container.Spec.Hostname
 
@@ -30,11 +37,24 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 
 	path, err := exec.LookPath(command[0])
 	if err != nil {
-		return err
+		return fmt.Errorf("%s not found: %v", command[0], err)
 	}
 
 	if err := syscall.Exec(path, command[0:], container.Spec.Process.Env); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func awaitStart(path string) error {
+	if err := unix.Mkfifo(path, 0o622); err != nil {
+		return fmt.Errorf("mkfifo(%s) failed: %v", path, err)
+	}
+
+	_, err := unix.Open(path, unix.O_WRONLY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return fmt.Errorf("failed open exec.Fifo file(%s): %v", path, err)
 	}
 
 	return nil
