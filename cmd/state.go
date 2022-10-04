@@ -26,7 +26,7 @@ Where "<container-id>" is your name for instance of the container.
 			return err
 		}
 
-		fmt.Println(container.State)
+		fmt.Println(container.CurrentStatus())
 
 		return nil
 	},

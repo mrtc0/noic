@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/mrtc0/noic/pkg/container"
 	"github.com/urfave/cli"
 )
@@ -26,6 +28,9 @@ Where "<container-id>" is your name for instance of the container.
 		}
 
 		c.Run()
+		if err = container.SaveStateFile(c); err != nil {
+			return fmt.Errorf("failed save state: %v", err)
+		}
 
 		return nil
 	},

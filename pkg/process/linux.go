@@ -8,6 +8,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type InitProcess struct {
+	Pid int `json:"pid"`
+}
+
 func newPipe() (*os.File, *os.File, error) {
 	r, w, err := os.Pipe()
 	if err != nil {

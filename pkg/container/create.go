@@ -32,9 +32,5 @@ func Create(context *cli.Context) (*Container, error) {
 		return nil, fmt.Errorf("failed create container: %v", err)
 	}
 
-	if err = saveStateFile(container); err != nil {
-		return nil, fmt.Errorf("failed save state: %v", err)
-	}
-
 	return container, err
 }

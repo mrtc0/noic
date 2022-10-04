@@ -31,7 +31,6 @@ func (f *ContainerFactory) Create(id string, spec *specs.Spec) (*Container, erro
 	execFifoPath := filepath.Join(StateDir, id, execFifoFilename)
 
 	c := &Container{ID: id, Root: containerRoot, ExecFifoPath: execFifoPath, Spec: spec}
-	c.State = Created
 
 	return c, nil
 }
