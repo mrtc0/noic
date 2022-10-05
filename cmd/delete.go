@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/mrtc0/noic/pkg/container"
 	"github.com/urfave/cli"
@@ -25,12 +26,8 @@ Where "<container-id>" is your name for instance of the container.
 			return err
 		}
 
-		if c.CurrentStatus() == container.Stopped {
-			return c.Destroy()
-		}
-
-		if err = c.Kill(); err != nil {
-			return err
+		if c.CurrentStatus() != container.Stopped {
+			return fmt.Errorf("container is not stoppped")
 		}
 
 		return c.Destroy()
