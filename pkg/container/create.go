@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/mrtc0/noic/pkg/specs"
+	specsgo "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
 )
 
@@ -35,6 +36,14 @@ func Create(context *cli.Context) (*Container, error) {
 	c, err := newContainer(context, id, spec)
 	if err != nil {
 		return nil, fmt.Errorf("failed create container: %v", err)
+	}
+
+	c.State = specsgo.State{
+		Version:     spec.Version,
+		ID:          id,
+		Status:      "creating",
+		Bundle:      bundle,
+		Annotations: map[string]string{},
 	}
 
 	return c, err

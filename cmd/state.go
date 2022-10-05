@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -26,7 +27,12 @@ Where "<container-id>" is your name for instance of the container.
 			return err
 		}
 
-		fmt.Println(c.CurrentStatus())
+		c.State.Status = c.CurrentStatus().String()
+		j, err := json.Marshal(c.State)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(j))
 
 		return nil
 	},

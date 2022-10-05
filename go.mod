@@ -3,6 +3,7 @@ module github.com/mrtc0/noic
 go 1.19
 
 require (
+	github.com/opencontainers/runtime-spec v1.0.2
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli v1.22.9
