@@ -15,6 +15,11 @@ func Create(context *cli.Context) (*Container, error) {
 		return nil, errors.New("container id cannnot be empty")
 	}
 
+	_, err := FindByID(id)
+	if err == nil {
+		return nil, fmt.Errorf("container %s is exists", id)
+	}
+
 	bundle := context.String("bundle")
 	if bundle != "" {
 		if err := os.Chdir(bundle); err != nil {
@@ -27,10 +32,10 @@ func Create(context *cli.Context) (*Container, error) {
 		return nil, err
 	}
 
-	container, err := newContainer(context, id, spec)
+	c, err := newContainer(context, id, spec)
 	if err != nil {
 		return nil, fmt.Errorf("failed create container: %v", err)
 	}
 
-	return container, err
+	return c, err
 }

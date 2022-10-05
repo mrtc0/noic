@@ -26,7 +26,6 @@ type Container struct {
 func FindByID(id string) (*Container, error) {
 	path, err := StateFilePath(id)
 	if err != nil {
-		logrus.Debug(err)
 		return nil, fmt.Errorf("container %s does not exists", id)
 	}
 
