@@ -72,6 +72,24 @@ func (c *Container) Run() {
 	writePipe.Close()
 }
 
+func (c *Container) Destroy() error {
+	path := filepath.Join(StateDir, c.ID)
+	if err := os.RemoveAll(path); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Container) Kill() error {
+	ps, err := gopsutil.NewProcess(int32(c.InitProcess.Pid))
+	if err != nil {
+		return err
+	}
+
+	return ps.Kill()
+}
+
 // Container Status
 type Status int
 

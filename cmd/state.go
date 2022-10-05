@@ -21,12 +21,12 @@ Where "<container-id>" is your name for instance of the container.
 			return errors.New("container id cannnot be empty")
 		}
 
-		container, err := container.FindByID(id)
+		c, err := container.FindByID(id)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println(container.CurrentStatus())
+		fmt.Println(c.CurrentStatus())
 
 		return nil
 	},

@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"os"
-	"path/filepath"
 
 	"github.com/mrtc0/noic/pkg/container"
 	"github.com/urfave/cli"
@@ -22,11 +20,19 @@ Where "<container-id>" is your name for instance of the container.
 			return errors.New("container id cannnot be empty")
 		}
 
-		path := filepath.Join(container.StateDir, id)
-		if err := os.RemoveAll(path); err != nil {
+		c, err := container.FindByID(id)
+		if err != nil {
 			return err
 		}
 
-		return nil
+		if c.CurrentStatus() == container.Stopped {
+			return c.Destroy()
+		}
+
+		if err = c.Kill(); err != nil {
+			return err
+		}
+
+		return c.Destroy()
 	},
 }
