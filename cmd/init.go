@@ -16,7 +16,7 @@ var InitCommand = cli.Command{
 		defer pipe.Close()
 		err := container.Init(context, pipe)
 		if err != nil {
-			fmt.Println("init error")
+			fmt.Printf("init error: %s", err)
 			return err
 		}
 		return nil
