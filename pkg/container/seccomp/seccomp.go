@@ -8,7 +8,7 @@ import (
 	libseccomp "github.com/seccomp/libseccomp-golang"
 )
 
-const defaultErrnoRetCode = int16(syscall.EPERM)
+const defaultErrnoRetCode = uint(syscall.EPERM)
 
 var archs = map[string]string{
 	"SCMP_ARCH_X86":         "x86",
@@ -39,7 +39,14 @@ func LoadSeccompProfile(profile specs.LinuxSeccomp) error {
 }
 
 func NewFilter(profile specs.LinuxSeccomp) (*libseccomp.ScmpFilter, error) {
-	filter, err := libseccomp.NewFilter(defaultErrnoRet(profile))
+	errnoRet := defaultErrnoRet(profile)
+
+	action, err := FindLibSeccompScmpAction(string(profile.DefaultAction), &errnoRet)
+	if err != nil {
+		return nil, fmt.Errorf("invalid seccomp action %s: %s", action, err)
+	}
+
+	filter, err := libseccomp.NewFilter(action)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating seccomp filter: %s", err)
 	}
@@ -56,13 +63,20 @@ func NewFilter(profile specs.LinuxSeccomp) (*libseccomp.ScmpFilter, error) {
 	}
 
 	for _, s := range profile.Syscalls {
+		if len(s.Names) == 0 {
+			return nil, fmt.Errorf("syscalls is empty")
+		}
 		for _, name := range s.Names {
 			syscallID, err := libseccomp.GetSyscallFromName(name)
 			if err != nil {
 				return nil, fmt.Errorf("invalid syscall. %s is not found: %s", name, err)
 			}
 
-			action, err := FindLibSeccompScmpAction(string(s.Action))
+			if s.ErrnoRet != nil {
+				errnoRet = *s.ErrnoRet
+			}
+
+			action, err := FindLibSeccompScmpAction(string(s.Action), &errnoRet)
 			if err != nil {
 				return nil, fmt.Errorf("invalid seccomp action %s: %s", action, err)
 			}
@@ -74,15 +88,15 @@ func NewFilter(profile specs.LinuxSeccomp) (*libseccomp.ScmpFilter, error) {
 	return filter, err
 }
 
-func defaultErrnoRet(profile specs.LinuxSeccomp) libseccomp.ScmpAction {
+func defaultErrnoRet(profile specs.LinuxSeccomp) uint {
 	if profile.DefaultErrnoRet != nil {
-		return libseccomp.ActErrno.SetReturnCode(int16(*profile.DefaultErrnoRet))
+		return *profile.DefaultErrnoRet
 	}
 
-	return libseccomp.ActErrno.SetReturnCode(defaultErrnoRetCode)
+	return defaultErrnoRetCode
 }
 
-func FindLibSeccompScmpAction(action string) (libseccomp.ScmpAction, error) {
+func FindLibSeccompScmpAction(action string, errno *uint) (libseccomp.ScmpAction, error) {
 	switch action {
 	case "SCMP_ACT_KILL":
 		return libseccomp.ActKill, nil
@@ -93,9 +107,9 @@ func FindLibSeccompScmpAction(action string) (libseccomp.ScmpAction, error) {
 	case "SCMP_ACT_TRAP":
 		return libseccomp.ActTrap, nil
 	case "SCMP_ACT_ERRNO":
-		return libseccomp.ActErrno, nil
+		return libseccomp.ActErrno.SetReturnCode(int16(*errno)), nil
 	case "SCMP_ACT_TRACE":
-		return libseccomp.ActTrace, nil
+		return libseccomp.ActTrace.SetReturnCode(int16(*errno)), nil
 	case "SCMP_ACT_ALLOW":
 		return libseccomp.ActAllow, nil
 	case "SCMP_ACT_LOG":
@@ -104,6 +118,6 @@ func FindLibSeccompScmpAction(action string) (libseccomp.ScmpAction, error) {
 		return libseccomp.ActNotify, nil
 	}
 
-	return 0, fmt.Errorf("")
+	return libseccomp.ActInvalid, fmt.Errorf("invalid seccomp action")
 
 }
