@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/mrtc0/noic/pkg/container/seccomp"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/sys/unix"
@@ -40,6 +41,13 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return fmt.Errorf("%s not found: %v", command[0], err)
 	}
 
+	if container.Spec.Linux.Seccomp != nil {
+		if err = seccomp.LoadSeccompProfile(*container.Spec.Linux.Seccomp); err != nil {
+			return err
+		}
+	}
+
+	// Run a container process
 	if err := syscall.Exec(path, command[0:], container.Spec.Process.Env); err != nil {
 		return err
 	}
