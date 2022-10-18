@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/mrtc0/noic/pkg/container/cgroups"
 	"github.com/mrtc0/noic/pkg/container/seccomp"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -39,6 +40,26 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 	path, err := exec.LookPath(command[0])
 	if err != nil {
 		return fmt.Errorf("%s not found: %v", command[0], err)
+	}
+
+	if container.Spec.Linux.Resources != nil {
+		// TODO: support container.Spec.Linux.CgroupsPath
+		mountpoint := ""
+		if container.Spec.Linux.CgroupsPath != "" {
+			mountpoint = container.Spec.Linux.CgroupsPath
+		}
+		mgr, err := cgroups.New(container.ID, mountpoint, *container.Spec.Linux.Resources)
+		if err != nil {
+			fmt.Println(err)
+			return fmt.Errorf("create cgroup failed: %s", err)
+		}
+
+		pid := os.Getpid()
+		// pid := container.InitProcess.Pid
+		if err := mgr.Add(uint64(pid)); err != nil {
+			fmt.Println(err)
+			return fmt.Errorf("failed add process to cgroup: %s", err)
+		}
 	}
 
 	if container.Spec.Linux.Seccomp != nil {

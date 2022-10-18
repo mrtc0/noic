@@ -3,7 +3,7 @@ package seccomp
 import (
 	"testing"
 
-	"github.com/mrtc0/noic/pkg/specs"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
 )
 

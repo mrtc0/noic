@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/mrtc0/noic/pkg/container"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
 )
 
@@ -27,7 +28,7 @@ Where "<container-id>" is your name for instance of the container.
 			return err
 		}
 
-		c.State.Status = c.CurrentStatus().String()
+		c.State.Status = specs.ContainerState(c.CurrentStatus().String())
 		j, err := json.Marshal(c.State)
 		if err != nil {
 			return err

@@ -7,8 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/mrtc0/noic/pkg/process"
-	"github.com/mrtc0/noic/pkg/specs"
-	specsgo "github.com/opencontainers/runtime-spec/specs-go"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	gopsutil "github.com/shirou/gopsutil/process"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -22,7 +21,7 @@ type Container struct {
 	ExecFifoPath string
 	Spec         *specs.Spec
 	InitProcess  *process.InitProcess
-	State        specsgo.State
+	State        specs.State
 }
 
 func FindByID(id string) (*Container, error) {
@@ -65,7 +64,7 @@ func (c *Container) Run() {
 
 	c.InitProcess = &process.InitProcess{Pid: parent.Process.Pid}
 	c.State.Pid = parent.Process.Pid
-	c.State.Status = c.CurrentStatus().String()
+	c.State.Status = specs.ContainerState(c.CurrentStatus().String())
 
 	b, err := json.Marshal(c)
 	if err != nil {

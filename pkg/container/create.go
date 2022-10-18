@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mrtc0/noic/pkg/specs"
 	specsgo "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
 )
@@ -28,7 +27,7 @@ func Create(context *cli.Context) (*Container, error) {
 		}
 	}
 
-	spec, err := specs.LoadSpec(specs.DefaultSpecConfigFilename)
+	spec, err := LoadSpec(DefaultSpecConfigFilename)
 	if err != nil {
 		return nil, err
 	}
