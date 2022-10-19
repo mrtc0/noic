@@ -32,16 +32,6 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
-	if err := setupMount(); err != nil {
-		logrus.Error("Failed setupMount")
-		return err
-	}
-
-	path, err := exec.LookPath(command[0])
-	if err != nil {
-		return fmt.Errorf("%s not found: %v", command[0], err)
-	}
-
 	if container.Spec.Linux.Resources != nil {
 		// TODO: support container.Spec.Linux.CgroupsPath
 		mountpoint := ""
@@ -60,6 +50,16 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 			fmt.Println(err)
 			return fmt.Errorf("failed add process to cgroup: %s", err)
 		}
+	}
+
+	if err := setupMount(); err != nil {
+		logrus.Error("Failed setupMount")
+		return err
+	}
+
+	path, err := exec.LookPath(command[0])
+	if err != nil {
+		return fmt.Errorf("%s not found: %v", command[0], err)
 	}
 
 	if container.Spec.Linux.Seccomp != nil {

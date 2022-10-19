@@ -42,9 +42,6 @@ func IsVersion2() bool {
 func New(name string, path string, resources specs.LinuxResources) (*Manager, error) {
 	// if IsVersion2() {
 	if path == "" {
-		if err := mountCgroupV2("/sys/fs/cgroup"); err != nil {
-			return nil, err
-		}
 		m, err := cgroupsv2.NewSystemd("/", fmt.Sprintf("%s-cgroup.slice", name), -1, cgroupsv2.ToResources(&resources))
 		if err != nil {
 			return nil, err
@@ -53,9 +50,6 @@ func New(name string, path string, resources specs.LinuxResources) (*Manager, er
 		return &Manager{v2: m}, nil
 	}
 
-	if err := mountCgroupV2(path); err != nil {
-		return nil, err
-	}
 	m, err := cgroupsv2.NewManager(path, fmt.Sprintf("/%s-cgroup.slice", name), cgroupsv2.ToResources(&resources))
 	if err != nil {
 		return nil, err
