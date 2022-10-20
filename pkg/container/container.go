@@ -53,7 +53,7 @@ func newContainer(context *cli.Context, id string, spec *specs.Spec) (*Container
 }
 
 func (c *Container) Run() {
-	parent, writePipe, err := process.NewParentProcess(c.Root, c.Spec.Process.Env)
+	parent, writePipe, err := c.NewParentProcess()
 	if err != nil {
 		logrus.Error("Failed")
 	}
