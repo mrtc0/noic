@@ -10,6 +10,7 @@ import (
 
 	"github.com/mrtc0/noic/pkg/container/cgroups"
 	"github.com/mrtc0/noic/pkg/container/seccomp"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/sys/unix"
@@ -57,6 +58,10 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
+	if err := readonlyPathMount(container.Spec.Linux.ReadonlyPaths); err != nil {
+		return err
+	}
+
 	path, err := exec.LookPath(command[0])
 	if err != nil {
 		return fmt.Errorf("%s not found: %v", command[0], err)
@@ -86,6 +91,28 @@ func awaitStart(path string) error {
 		return fmt.Errorf("failed open exec.Fifo file(%s): %v", path, err)
 	}
 
+	return nil
+}
+
+func createDevices(devices []specs.LinuxDevice, path string) error {
+	for _, device := range devices {
+		dest := filepath.Join(path, device.Path)
+		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+			return err
+		}
+
+	}
+}
+
+func mknodDevice(dest string, device *specs.LinuxDevice) {
+}
+
+func readonlyPathMount(paths []string) error {
+	for _, path := range paths {
+		if err := syscall.Mount(path, path, "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

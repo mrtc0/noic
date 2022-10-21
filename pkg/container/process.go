@@ -31,11 +31,6 @@ func (c Container) NewParentProcess() (*exec.Cmd, *os.File, error) {
 	}
 
 	cmd := exec.Command(initCmd, "init")
-	/*
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS | syscall.CLONE_NEWNET | syscall.CLONE_NEWIPC,
-		}
-	*/
 
 	attr, err := sysProcAttr(c.Spec.Linux.Namespaces)
 	if err != nil {
