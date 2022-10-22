@@ -3,6 +3,7 @@ package container
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -62,6 +63,17 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	if err := createDefaultDevices(pwd); err != nil {
+		return err
+	}
+	if err := createDevices(container.Spec.Linux.Devices, pwd); err != nil {
+		return err
+	}
+
 	path, err := exec.LookPath(command[0])
 	if err != nil {
 		return fmt.Errorf("%s not found: %v", command[0], err)
@@ -94,17 +106,102 @@ func awaitStart(path string) error {
 	return nil
 }
 
+// https://github.com/opencontainers/runtime-spec/blob/494a5a6aca782455c0fbfc35af8e12f04e98a55e/config-linux.md#default-devices
+func createDefaultDevices(path string) error {
+	uid := uint32(0)
+	gid := uint32(0)
+	mode := fs.FileMode(0o666)
+	defaultDevices := []specs.LinuxDevice{
+		{
+			Path:     "/dev/null",
+			Type:     "c",
+			Major:    1,
+			Minor:    3,
+			FileMode: &mode,
+			UID:      &uid,
+			GID:      &gid,
+		},
+		{
+			Path:     "/dev/random",
+			Type:     "c",
+			Major:    1,
+			Minor:    8,
+			FileMode: &mode,
+			UID:      &uid,
+			GID:      &gid,
+		},
+		{
+			Path:     "/dev/full",
+			Type:     "c",
+			Major:    1,
+			Minor:    7,
+			FileMode: &mode,
+			UID:      &uid,
+			GID:      &gid,
+		},
+		{
+			Path:     "/dev/tty",
+			Type:     "c",
+			Major:    5,
+			Minor:    0,
+			FileMode: &mode,
+			UID:      &uid,
+			GID:      &gid,
+		},
+		{
+			Path:     "/dev/zero",
+			Type:     "c",
+			Major:    1,
+			Minor:    5,
+			FileMode: &mode,
+			UID:      &uid,
+			GID:      &gid,
+		},
+		{
+			Path:     "/dev/urandom",
+			Type:     "c",
+			Major:    1,
+			Minor:    9,
+			FileMode: &mode,
+			UID:      &uid,
+			GID:      &gid,
+		},
+	}
+
+	return createDevices(defaultDevices, path)
+}
+
 func createDevices(devices []specs.LinuxDevice, path string) error {
 	for _, device := range devices {
 		dest := filepath.Join(path, device.Path)
-		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+		if err := mknodDevice(dest, device); err != nil {
 			return err
 		}
-
 	}
+
+	return nil
 }
 
-func mknodDevice(dest string, device *specs.LinuxDevice) {
+func mknodDevice(dest string, device specs.LinuxDevice) error {
+	fileMode := *device.FileMode
+	deviceType := device.Type
+	switch deviceType {
+	case "c":
+		fileMode |= unix.S_IFCHR
+	case "b":
+		fileMode |= unix.S_IFBLK
+	case "p":
+		fileMode |= unix.S_IFIFO
+	default:
+		return fmt.Errorf("invalid device type: %s", deviceType)
+	}
+
+	d := unix.Mkdev(uint32(device.Major), uint32(device.Minor))
+	if err := syscall.Mknod(dest, uint32(fileMode), int(d)); err != nil {
+		return err
+	}
+
+	return os.Chown(dest, int(*device.UID), int(*device.GID))
 }
 
 func readonlyPathMount(paths []string) error {
