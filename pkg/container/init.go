@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/mrtc0/noic/pkg/container/capabilities"
 	"github.com/mrtc0/noic/pkg/container/cgroups"
 	"github.com/mrtc0/noic/pkg/container/seccomp"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -82,6 +83,13 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 	if container.Spec.Linux.Seccomp != nil {
 		if err = seccomp.LoadSeccompProfile(*container.Spec.Linux.Seccomp); err != nil {
 			return err
+		}
+	}
+
+	if container.Spec.Process.Capabilities != nil {
+		cap := capabilities.New(*container.Spec.Process.Capabilities)
+		if err := cap.Apply(); err != nil {
+			return fmt.Errorf("faild apply capabilities: %v", err)
 		}
 	}
 
@@ -168,7 +176,43 @@ func createDefaultDevices(path string) error {
 		},
 	}
 
+	if err := setupPtmx(path); err != nil {
+		return err
+	}
+
+	if err := createDevSymlinks(path); err != nil {
+		return err
+	}
+
 	return createDevices(defaultDevices, path)
+}
+
+func createDevSymlinks(path string) error {
+	links := [][2]string{
+		{"/proc/self/fd", "/dev/fd"},
+		{"/proc/self/fd/0", "/dev/stdin"},
+		{"/proc/self/fd/1", "/dev/stdout"},
+		{"/proc/self/fd/2", "/dev/stderr"},
+	}
+
+	for _, link := range links {
+		if err := os.Symlink(link[0], filepath.Join(path, link[1])); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func setupPtmx(path string) error {
+	ptmx := filepath.Join(path, "dev/ptmx")
+	if err := os.Remove(ptmx); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if err := os.Symlink("pts/ptmx", ptmx); err != nil {
+		return err
+	}
+	return nil
 }
 
 func createDevices(devices []specs.LinuxDevice, path string) error {
