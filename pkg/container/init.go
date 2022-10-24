@@ -84,6 +84,10 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
+	if err := processes.SetupNowNewPrivileges(*container.Spec.Process); err != nil {
+		return err
+	}
+
 	path, err := exec.LookPath(command[0])
 	if err != nil {
 		return fmt.Errorf("%s not found: %v", command[0], err)
