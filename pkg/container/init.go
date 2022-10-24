@@ -12,6 +12,7 @@ import (
 	"github.com/mrtc0/noic/pkg/container/capabilities"
 	"github.com/mrtc0/noic/pkg/container/cgroups"
 	"github.com/mrtc0/noic/pkg/container/mount"
+	"github.com/mrtc0/noic/pkg/container/processes"
 	"github.com/mrtc0/noic/pkg/container/seccomp"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
@@ -35,6 +36,13 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
+	pid := os.Getpid()
+	if container.Spec.Process.Rlimits != nil {
+		if err := processes.SetupRlimits(pid, *container.Spec.Process); err != nil {
+			return err
+		}
+	}
+
 	if container.Spec.Linux.Resources != nil {
 		// TODO: support container.Spec.Linux.CgroupsPath
 		mountpoint := ""
@@ -47,8 +55,6 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 			return fmt.Errorf("create cgroup failed: %s", err)
 		}
 
-		pid := os.Getpid()
-		// pid := container.InitProcess.Pid
 		if err := mgr.Add(uint64(pid)); err != nil {
 			return fmt.Errorf("failed add process to cgroup: %s", err)
 		}
