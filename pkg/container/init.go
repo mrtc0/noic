@@ -11,9 +11,9 @@ import (
 
 	"github.com/mrtc0/noic/pkg/container/capabilities"
 	"github.com/mrtc0/noic/pkg/container/cgroups"
+	"github.com/mrtc0/noic/pkg/container/mount"
 	"github.com/mrtc0/noic/pkg/container/seccomp"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/sys/unix"
 )
@@ -50,13 +50,16 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		pid := os.Getpid()
 		// pid := container.InitProcess.Pid
 		if err := mgr.Add(uint64(pid)); err != nil {
-			fmt.Println(err)
 			return fmt.Errorf("failed add process to cgroup: %s", err)
 		}
 	}
 
 	if err := setupMount(); err != nil {
-		logrus.Error("Failed setupMount")
+		fmt.Printf("Failed setupMount: %s", err)
+		return err
+	}
+
+	if err := mount.MountFilesystems(container.Spec.Mounts); err != nil {
 		return err
 	}
 
@@ -292,13 +295,19 @@ func setupMount() error {
 		return err
 	}
 
-	mountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
-	if err := syscall.Mount("proc", "/proc", "proc", uintptr(mountFlags), ""); err != nil {
-		return err
-	}
-	if err := syscall.Mount("tmpfs", "/dev", "tmpfs", syscall.MS_NOSUID|syscall.MS_STRICTATIME, "mode=755"); err != nil {
-		return err
-	}
+	/*
+		mountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
+		if err := syscall.Mount("proc", "/proc", "proc", uintptr(mountFlags), ""); err != nil {
+			return err
+		}
+		if err := syscall.Mount("sysfs", "/sys", "sysfs", uintptr(mountFlags), ""); err != nil {
+			return err
+		}
+		/*
+			if err := syscall.Mount("tmpfs", "/dev/shm", "tmpfs", uintptr(mountFlags), "mode=1777"); err != nil {
+				return err
+			}
+	*/
 
 	return nil
 }
