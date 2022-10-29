@@ -37,6 +37,10 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
+	if err := apparmor.ApplyProfile(container.Spec.Process.ApparmorProfile); err != nil {
+		return err
+	}
+
 	pid := os.Getpid()
 	if container.Spec.Process.Rlimits != nil {
 		if err := processes.SetupRlimits(pid, *container.Spec.Process); err != nil {
@@ -89,13 +93,14 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
-	path, err := exec.LookPath(command[0])
-	if err != nil {
-		return fmt.Errorf("%s not found: %v", command[0], err)
-	}
-
 	if container.Spec.Linux.Seccomp != nil {
 		if err = seccomp.LoadSeccompProfile(*container.Spec.Linux.Seccomp); err != nil {
+			return err
+		}
+	}
+
+	if container.Spec.Process.OOMScoreAdj != nil {
+		if err := processes.ApplyOOMScoreAdj(*container.Spec.Process.OOMScoreAdj); err != nil {
 			return err
 		}
 	}
@@ -107,10 +112,10 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		}
 	}
 
-	if err := apparmor.ApplyProfile(container.Spec.Process.ApparmorProfile); err != nil {
-		return err
+	path, err := exec.LookPath(command[0])
+	if err != nil {
+		return fmt.Errorf("%s not found: %v", command[0], err)
 	}
-
 	// Run a container process
 	if err := syscall.Exec(path, command[0:], container.Spec.Process.Env); err != nil {
 		return err

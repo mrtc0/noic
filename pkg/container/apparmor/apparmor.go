@@ -12,6 +12,7 @@ func ApplyProfile(name string) error {
 	}
 
 	apparmorExecPath := "/proc/self/attr/apparmor/exec"
+	// apparmorExecPath := fmt.Sprintf("/proc/%d/attr/apparmor/exec", pid)
 	if _, err := os.Stat(apparmorExecPath); errors.Is(err, os.ErrNotExist) {
 		apparmorExecPath = "/proc/self/attr/exec"
 	}
