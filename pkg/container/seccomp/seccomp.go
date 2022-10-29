@@ -35,6 +35,10 @@ func LoadSeccompProfile(profile specs.LinuxSeccomp) error {
 		return err
 	}
 
+	if err := filter.SetNoNewPrivsBit(false); err != nil {
+		return err
+	}
+
 	return filter.Load()
 }
 

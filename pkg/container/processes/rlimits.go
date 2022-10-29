@@ -49,11 +49,9 @@ func SetupRlimits(pid int, process specs.Process) error {
 	return nil
 }
 
-func SetupNowNewPrivileges(process specs.Process) error {
-	if process.NoNewPrivileges {
-		if err := unix.Prctl(unix.PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0); err != nil {
-			return fmt.Errorf("faild NoNewPrivileges: %s", err)
-		}
+func SetupNowNewPrivileges() error {
+	if err := unix.Prctl(unix.PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0); err != nil {
+		return fmt.Errorf("faild NoNewPrivileges: %s", err)
 	}
 
 	return nil

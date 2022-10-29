@@ -89,8 +89,10 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
-	if err := processes.SetupNowNewPrivileges(*container.Spec.Process); err != nil {
-		return err
+	if container.Spec.Process.NoNewPrivileges {
+		if err := processes.SetupNowNewPrivileges(); err != nil {
+			return err
+		}
 	}
 
 	if container.Spec.Linux.Seccomp != nil {
