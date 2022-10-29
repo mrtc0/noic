@@ -278,7 +278,18 @@ func readonlyPathMount(paths []string) error {
 		if err := syscall.Mount(path, path, "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
 			return err
 		}
+
+		var s unix.Statfs_t
+		if err := unix.Statfs(path, &s); err != nil {
+			return &os.PathError{Op: "statfs", Path: path, Err: err}
+		}
+		flags := uintptr(s.Flags) & (unix.MS_NOSUID | unix.MS_NODEV | unix.MS_NOEXEC)
+
+		if err := syscall.Mount(path, path, "", flags|unix.MS_BIND|unix.MS_REMOUNT|unix.MS_RDONLY, ""); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
