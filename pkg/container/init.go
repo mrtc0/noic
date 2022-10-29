@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/mrtc0/noic/pkg/container/apparmor"
 	"github.com/mrtc0/noic/pkg/container/capabilities"
 	"github.com/mrtc0/noic/pkg/container/cgroups"
 	"github.com/mrtc0/noic/pkg/container/mount"
@@ -104,6 +105,10 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		if err := cap.Apply(); err != nil {
 			return fmt.Errorf("faild apply capabilities: %v", err)
 		}
+	}
+
+	if err := apparmor.ApplyProfile(container.Spec.Process.ApparmorProfile); err != nil {
+		return err
 	}
 
 	// Run a container process
