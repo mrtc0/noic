@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/sirupsen/logrus"
 )
 
 func newPipe() (*os.File, *os.File, error) {
@@ -24,13 +23,13 @@ func (c Container) NewParentProcess() (*exec.Cmd, *os.File, error) {
 		return nil, nil, err
 	}
 
-	initCmd, err := os.Readlink("/proc/self/exe")
-	if err != nil {
-		logrus.Error("Failed readlink /proc/self/exe")
+	if _, err := exec.LookPath("/proc/self/exe"); err != nil {
 		return nil, nil, err
 	}
 
-	cmd := exec.Command(initCmd, "init")
+	args := []string{os.Args[0], "init"}
+	cmd := exec.Command("/proc/self/exe", args[1:]...)
+	cmd.Args[0] = args[0]
 
 	attr, err := sysProcAttr(c.Spec.Linux.Namespaces)
 	if err != nil {
@@ -46,7 +45,7 @@ func (c Container) NewParentProcess() (*exec.Cmd, *os.File, error) {
 	cmd.ExtraFiles = []*os.File{readPipe}
 
 	cmd.Dir = c.Root
-	cmd.Env = append(os.Environ(), c.Spec.Process.Env...)
+	cmd.Env = append(cmd.Env, c.Spec.Process.Env...)
 
 	return cmd, writePipe, nil
 }

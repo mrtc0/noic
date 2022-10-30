@@ -11,7 +11,6 @@ import (
 
 	"github.com/mrtc0/noic/pkg/container/apparmor"
 	"github.com/mrtc0/noic/pkg/container/capabilities"
-	"github.com/mrtc0/noic/pkg/container/cgroups"
 	"github.com/mrtc0/noic/pkg/container/mount"
 	"github.com/mrtc0/noic/pkg/container/processes"
 	"github.com/mrtc0/noic/pkg/container/seccomp"
@@ -48,22 +47,24 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		}
 	}
 
-	if container.Spec.Linux.Resources != nil {
-		// TODO: support container.Spec.Linux.CgroupsPath
-		mountpoint := ""
-		if container.Spec.Linux.CgroupsPath != "" {
-			mountpoint = container.Spec.Linux.CgroupsPath
-		}
-		mgr, err := cgroups.New(container.ID, mountpoint, *container.Spec.Linux.Resources)
-		if err != nil {
-			fmt.Println(err)
-			return fmt.Errorf("create cgroup failed: %s", err)
-		}
+	/*
+		if container.Spec.Linux.Resources != nil {
+			// TODO: support container.Spec.Linux.CgroupsPath
+			mountpoint := ""
+			if container.Spec.Linux.CgroupsPath != "" {
+				mountpoint = container.Spec.Linux.CgroupsPath
+			}
+			mgr, err := cgroups.New(container.ID, mountpoint, *container.Spec.Linux.Resources)
+			if err != nil {
+				fmt.Println(err)
+				return fmt.Errorf("create cgroup failed: %s", err)
+			}
 
-		if err := mgr.Add(uint64(pid)); err != nil {
-			return fmt.Errorf("failed add process to cgroup: %s", err)
+			if err := mgr.Add(uint64(pid)); err != nil {
+				return fmt.Errorf("failed add process to cgroup: %s", err)
+			}
 		}
-	}
+	*/
 
 	if err := setupMount(); err != nil {
 		fmt.Printf("Failed setupMount: %s", err)
@@ -110,7 +111,7 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 	if container.Spec.Process.Capabilities != nil {
 		cap := capabilities.New(*container.Spec.Process.Capabilities)
 		if err := cap.Apply(); err != nil {
-			return fmt.Errorf("faild apply capabilities: %v", err)
+			return fmt.Errorf("failed apply capabilities: %v", err)
 		}
 	}
 

@@ -21,7 +21,8 @@ Where "<container-id>" is your name for instance of the container.
 			return errors.New("container id cannnot be empty")
 		}
 
-		c, err := container.FindByID(id)
+		stateRootDirectory := context.GlobalString("root")
+		c, err := container.FindByID(id, stateRootDirectory)
 		if err != nil {
 			return err
 		}

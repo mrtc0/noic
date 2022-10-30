@@ -18,6 +18,8 @@ var (
 		"relatime":    syscall.MS_RELATIME,
 		"ro":          syscall.MS_RDONLY,
 		"bind":        syscall.MS_BIND,
+		"rbind":       syscall.MS_BIND | syscall.MS_REC,
+		"rprivate":    syscall.MS_PRIVATE | syscall.MS_REC,
 	}
 )
 
@@ -42,12 +44,17 @@ func MountFilesystems(mounts []specs.Mount) error {
 			}
 		}
 
+		if mnt.Type == "bind" {
+			// TODO: 動かない...
+			continue
+		}
+
 		if err := os.MkdirAll(mnt.Destination, 0o755); err != nil {
-			return fmt.Errorf("faild create directory: %s", mnt.Destination)
+			return fmt.Errorf("failed create directory: %s", mnt.Destination)
 		}
 
 		if err := syscall.Mount(mnt.Source, mnt.Destination, mnt.Type, uintptr(flags), strings.Join(labels, ",")); err != nil {
-			return fmt.Errorf("faild mount. source: %s, destination: %s, type: %s", mnt.Source, mnt.Destination, mnt.Type)
+			return fmt.Errorf("failed mount. source: %s, destination: %s, type: %s, %v", mnt.Source, mnt.Destination, mnt.Type, err)
 		}
 	}
 

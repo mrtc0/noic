@@ -3,63 +3,87 @@ package container
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/mrtc0/noic/pkg/process"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	gopsutil "github.com/shirou/gopsutil/process"
-	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
 )
 
 const execFifoFilename = "exec.fifo"
 
 type Container struct {
-	ID           string
-	Root         string
-	ExecFifoPath string
-	Spec         *specs.Spec
-	InitProcess  *process.InitProcess
-	State        specs.State
+	ID                 string
+	Root               string
+	ExecFifoPath       string
+	Spec               *specs.Spec
+	InitProcess        *process.InitProcess
+	State              specs.State
+	StateRootDirectory string
 }
 
-func FindByID(id string) (*Container, error) {
-	path, err := StateFilePath(id)
+func Exists(stateRootDirectory, containerID string) bool {
+	d := filepath.Join(stateRootDirectory, containerID)
+	_, err := os.Stat(d)
+	return err == nil
+}
+
+func (c *Container) StateFilePath() string {
+	return filepath.Join(c.StateRootDirectory, c.ID, "state.json")
+}
+
+func (c *Container) StateDirectory() string {
+	return filepath.Join(c.StateRootDirectory, c.ID)
+}
+
+func (c *Container) SaveState() error {
+	if err := os.MkdirAll(c.StateDirectory(), 0o700); err != nil {
+		return err
+	}
+
+	j, err := json.Marshal(c)
 	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(c.StateFilePath(), j, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func FindByID(id string, stateRootDirectory string) (*Container, error) {
+	if !Exists(stateRootDirectory, id) {
 		return nil, fmt.Errorf("container %s does not exists", id)
 	}
 
+	path := filepath.Join(stateRootDirectory, id, "state.json")
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("state.json does not exists: %s", err)
 	}
 
 	var container *Container
 	if err = json.Unmarshal(raw, &container); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("faild unmarshal: %s", err)
 	}
 
 	return container, nil
 }
 
-func newContainer(context *cli.Context, id string, spec *specs.Spec) (*Container, error) {
-	factory, err := loadFactory(context)
-	if err != nil {
-		return nil, err
-	}
-
-	return factory.Create(id, spec)
-}
-
-func (c *Container) Run() {
+func (c *Container) Run() error {
 	parent, writePipe, err := c.NewParentProcess()
 	if err != nil {
-		logrus.Error("Failed")
+		return fmt.Errorf("faild NewParentProcess: %s", err)
 	}
 
 	if err := parent.Start(); err != nil {
-		logrus.Error(err)
+		return fmt.Errorf("failed start parent Process: %s", err)
 	}
 
 	c.InitProcess = &process.InitProcess{Pid: parent.Process.Pid}
@@ -68,15 +92,16 @@ func (c *Container) Run() {
 
 	b, err := json.Marshal(c)
 	if err != nil {
-		logrus.Error(err)
+		return fmt.Errorf("faild marshal: %s", err)
 	}
 	writePipe.Write(b)
 	writePipe.Close()
+
+	return nil
 }
 
 func (c *Container) Destroy() error {
-	path := filepath.Join(StateDir, c.ID)
-	if err := os.RemoveAll(path); err != nil {
+	if err := os.RemoveAll(c.StateDirectory()); err != nil {
 		return err
 	}
 
@@ -90,6 +115,23 @@ func (c *Container) Kill() error {
 	}
 
 	return ps.Kill()
+}
+
+func (c *Container) CreatePIDFile(path string) error {
+	var (
+		tmpDir  = filepath.Dir(path)
+		tmpName = filepath.Join(tmpDir, "."+filepath.Base(path))
+	)
+	f, err := os.OpenFile(tmpName, os.O_RDWR|os.O_CREATE|os.O_EXCL|os.O_SYNC, 0o666)
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString(strconv.Itoa(c.InitProcess.Pid))
+	f.Close()
+	if err != nil {
+		return err
+	}
+	return os.Rename(tmpName, path)
 }
 
 // Container Status
@@ -137,7 +179,7 @@ func (c *Container) CurrentStatus() Status {
 		return Stopped
 	}
 
-	if _, err := os.Stat(filepath.Join(StateDir, c.ID, execFifoFilename)); err == nil {
+	if _, err := os.Stat(filepath.Join(c.StateDirectory(), execFifoFilename)); err == nil {
 		return Created
 	}
 
