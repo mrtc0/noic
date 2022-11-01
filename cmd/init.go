@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/mrtc0/noic/pkg/container"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -16,7 +16,7 @@ var InitCommand = cli.Command{
 		defer pipe.Close()
 		err := container.Init(context, pipe)
 		if err != nil {
-			fmt.Printf("init error: %s", err)
+			logrus.Errorf("init error: %s", err)
 			return err
 		}
 		return nil

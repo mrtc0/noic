@@ -2,6 +2,7 @@ package container
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -48,6 +49,8 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 	}
 
 	/*
+		TODO: Support cgroups
+
 		if container.Spec.Linux.Resources != nil {
 			// TODO: support container.Spec.Linux.CgroupsPath
 			mountpoint := ""
@@ -66,12 +69,7 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		}
 	*/
 
-	if err := setupMount(); err != nil {
-		fmt.Printf("Failed setupMount: %s", err)
-		return err
-	}
-
-	if err := mount.MountFilesystems(container.Spec.Mounts); err != nil {
+	if err := mount.MountRootFs(container.Root, container.Spec); err != nil {
 		return err
 	}
 
@@ -276,7 +274,10 @@ func mknodDevice(dest string, device specs.LinuxDevice) error {
 
 func readonlyPathMount(paths []string) error {
 	for _, path := range paths {
-		if err := syscall.Mount(path, path, "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
+		if err := syscall.Mount(path, path, "", unix.MS_BIND|unix.MS_REC, ""); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
 			return err
 		}
 
@@ -294,6 +295,7 @@ func readonlyPathMount(paths []string) error {
 	return nil
 }
 
+/*
 func setupMount() error {
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -341,7 +343,7 @@ func setupMount() error {
 			if err := syscall.Mount("tmpfs", "/dev/shm", "tmpfs", uintptr(mountFlags), "mode=1777"); err != nil {
 				return err
 			}
-	*/
 
 	return nil
 }
+*/
