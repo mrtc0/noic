@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
-
 	specsgo "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -43,10 +41,6 @@ func MountRootFs(rootfs string, spec *specsgo.Spec) error {
 
 	if err := MountFilesystems(rootfs, spec.Mounts); err != nil {
 		return err
-	}
-
-	if _, err := os.Stat("/proc/uptime"); err != nil {
-		logrus.Error("/proc/uptime does not exists")
 	}
 
 	// TODO
