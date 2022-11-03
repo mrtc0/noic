@@ -43,9 +43,13 @@ func MountRootFs(rootfs string, spec *specsgo.Spec) error {
 		return err
 	}
 
-	// TODO
-	// create device
-	// create ptmx
+	if err := createDefaultDevices(rootfs); err != nil {
+		return err
+	}
+
+	if err := createDevices(spec.Linux.Devices, rootfs); err != nil {
+		return err
+	}
 
 	oldDir := filepath.Join(pwd, ".old")
 	if err = os.Mkdir(oldDir, 0777); err != nil {
@@ -70,6 +74,12 @@ func MountRootFs(rootfs string, spec *specsgo.Spec) error {
 
 	if err := syscall.Mount("", "/", "", uintptr(flags), ""); err != nil {
 		return fmt.Errorf("failed to mount rootfs: %s", err)
+	}
+
+	for _, path := range spec.Linux.MaskedPaths {
+		if err := MaskPath(path); err != nil {
+			return err
+		}
 	}
 
 	/*
