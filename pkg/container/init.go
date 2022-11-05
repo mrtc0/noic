@@ -10,6 +10,7 @@ import (
 
 	"github.com/mrtc0/noic/pkg/container/apparmor"
 	"github.com/mrtc0/noic/pkg/container/capabilities"
+	"github.com/mrtc0/noic/pkg/container/cgroups"
 	"github.com/mrtc0/noic/pkg/container/mount"
 	"github.com/mrtc0/noic/pkg/container/processes"
 	"github.com/mrtc0/noic/pkg/container/seccomp"
@@ -27,6 +28,8 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
+	pid := os.Getpid()
+
 	command := container.Spec.Process.Args
 	hostname := container.Spec.Hostname
 
@@ -38,33 +41,32 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		return err
 	}
 
-	pid := os.Getpid()
+	if container.Spec.Linux.Resources != nil && container.Spec.Linux.CgroupsPath != "" {
+		c := &cgroups.CgroupConfig{
+			UseSystemd: container.UseSystemdCgroups,
+			CgroupPath: container.Spec.Linux.CgroupsPath,
+			Resources:  container.Spec.Linux.Resources,
+			Name:       container.ID,
+			Pid:        container.InitProcess.Pid,
+		}
+
+		_, err := cgroups.New(c)
+		if err != nil {
+			return fmt.Errorf("failed create cgroup: %s", err)
+		}
+
+		/*
+			if err := manager.Add(uint64(pid)); err != nil {
+				return fmt.Errorf("failed add process to cgroup: %s", err)
+			}
+		*/
+	}
+
 	if container.Spec.Process.Rlimits != nil {
 		if err := processes.SetupRlimits(pid, *container.Spec.Process); err != nil {
 			return err
 		}
 	}
-
-	/*
-		TODO: Support cgroups
-
-		if container.Spec.Linux.Resources != nil {
-			// TODO: support container.Spec.Linux.CgroupsPath
-			mountpoint := ""
-			if container.Spec.Linux.CgroupsPath != "" {
-				mountpoint = container.Spec.Linux.CgroupsPath
-			}
-			mgr, err := cgroups.New(container.ID, mountpoint, *container.Spec.Linux.Resources)
-			if err != nil {
-				fmt.Println(err)
-				return fmt.Errorf("create cgroup failed: %s", err)
-			}
-
-			if err := mgr.Add(uint64(pid)); err != nil {
-				return fmt.Errorf("failed add process to cgroup: %s", err)
-			}
-		}
-	*/
 
 	if err := mount.MountRootFs(container.Root, container.Spec); err != nil {
 		return err

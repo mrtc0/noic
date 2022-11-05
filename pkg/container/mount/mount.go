@@ -8,6 +8,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/mrtc0/noic/pkg/container/cgroups"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -44,7 +45,9 @@ func MountFilesystems(rootfs string, mounts []specs.Mount) error {
 		dest := path.Join(rootfs, mnt.Destination)
 		switch mnt.Type {
 		case "cgroup":
-			continue
+			if cgroups.IsVersion2() {
+				return mountCgroupV2(mnt.Source, dest, flags, labels)
+			}
 		case "bind":
 			if err := bindMount(mnt.Source, dest, uintptr(flags), strings.Join(labels, ",")); err != nil {
 				return fmt.Errorf("failed bind mount %s: %s", mnt.Source, err)
@@ -100,4 +103,13 @@ func createFileOrDirectory(path string, isDir bool) error {
 	}
 
 	return nil
+}
+
+func mountCgroupV2(source string, destination string, flags int, labels []string) error {
+	if err := os.MkdirAll(destination, 0o755); err != nil {
+		return err
+	}
+
+	err := syscall.Mount(source, destination, "cgroup2", uintptr(flags), strings.Join(labels, ","))
+	return err
 }

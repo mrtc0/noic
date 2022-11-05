@@ -12,6 +12,7 @@ type ContainerFactory struct {
 	ContainerID        string
 	StateRootDirectory string
 	BundlePath         string
+	UseSystemdCgroups  bool
 }
 
 func (f *ContainerFactory) Create() (*Container, error) {
@@ -52,6 +53,7 @@ func (f *ContainerFactory) Create() (*Container, error) {
 			Annotations: map[string]string{},
 		},
 		StateRootDirectory: f.StateRootDirectory,
+		UseSystemdCgroups:  f.UseSystemdCgroups,
 	}
 
 	return c, nil

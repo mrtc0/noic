@@ -68,7 +68,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "systemd-cgroup",
-			Usage: "not supported",
+			Usage: "enable systemd cgroup support, expects cgroupsPath to be of form \"slice:prefix:name\" for e.g. \"system.slice:runc:434234\"",
 		},
 		cli.StringFlag{
 			Name:  "rootless",

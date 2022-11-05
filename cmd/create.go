@@ -47,11 +47,13 @@ Where "<container-id>" is your name for instance of the container.
 		}
 
 		bundlePath := context.String("bundle")
+		useSystemdCgroups := context.Bool("systemd-cgroup")
 
 		factory := &container.ContainerFactory{
 			ContainerID:        containerID,
 			StateRootDirectory: stateRootDirectory,
 			BundlePath:         bundlePath,
+			UseSystemdCgroups:  useSystemdCgroups,
 		}
 
 		c, err := factory.Create()

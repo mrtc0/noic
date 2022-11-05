@@ -23,6 +23,7 @@ type Container struct {
 	InitProcess        *process.InitProcess
 	State              specs.State
 	StateRootDirectory string
+	UseSystemdCgroups  bool
 }
 
 func Exists(stateRootDirectory, containerID string) bool {

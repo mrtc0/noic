@@ -82,19 +82,5 @@ func MountRootFs(rootfs string, spec *specsgo.Spec) error {
 		}
 	}
 
-	/*
-		mountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
-		if err := syscall.Mount("proc", "/proc", "proc", uintptr(mountFlags), ""); err != nil {
-			return err
-		}
-		if err := syscall.Mount("sysfs", "/sys", "sysfs", uintptr(mountFlags), ""); err != nil {
-			return err
-		}
-		/*
-			if err := syscall.Mount("tmpfs", "/dev/shm", "tmpfs", uintptr(mountFlags), "mode=1777"); err != nil {
-				return err
-			}
-	*/
-
 	return nil
 }
