@@ -136,9 +136,6 @@ func createDevSymlinks(path string) error {
 
 func setupPtmx(path string) error {
 	ptmx := filepath.Join(path, "dev/ptmx")
-	if err := os.Remove(ptmx); err != nil && !os.IsNotExist(err) {
-		return err
-	}
 	if err := os.Symlink("pts/ptmx", ptmx); err != nil {
 		return err
 	}
