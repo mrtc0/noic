@@ -36,7 +36,7 @@ func MountRootFs(rootfs string, spec *specsgo.Spec) error {
 
 	// bind mount for pivot_root
 	if err := syscall.Mount(rootfs, rootfs, "bind", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
-		return fmt.Errorf("failed bind mount for pivot_root: %s", err)
+		return fmt.Errorf("failed to bind mount for pivot_root: src=%s dest=%s, %s", rootfs, rootfs, err)
 	}
 
 	if err := MountFilesystems(rootfs, spec.Mounts); err != nil {

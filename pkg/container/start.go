@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -17,7 +18,7 @@ func Start(context *cli.Context) error {
 	stateRootDirectory := context.GlobalString("root")
 	c, err := FindByID(id, stateRootDirectory)
 	if err != nil {
-		return err
+		return fmt.Errorf("container %s is not found: %s", id, err)
 	}
 
 	_, err = os.OpenFile(c.ExecFifoPath, os.O_RDONLY, 0)
@@ -28,6 +29,8 @@ func Start(context *cli.Context) error {
 	if err = os.Remove(c.ExecFifoPath); err != nil {
 		return fmt.Errorf("failed remove execFifo %s: %v", c.ExecFifoPath, err)
 	}
+
+	logrus.Debugf("started container %s", id)
 
 	return nil
 }

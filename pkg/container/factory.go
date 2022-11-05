@@ -34,15 +34,25 @@ func (f *ContainerFactory) Create() (*Container, error) {
 		}
 	*/
 
-	x := filepath.Join(f.StateRootDirectory, f.ContainerID)
-	if err := os.MkdirAll(x, 0o700); err != nil {
+	cwd, err := os.Getwd()
+	if err != nil {
 		return nil, err
+	}
+
+	p := filepath.Join(f.StateRootDirectory, f.ContainerID)
+	if err := os.MkdirAll(p, 0o700); err != nil {
+		return nil, err
+	}
+
+	rootfsPath := spec.Root.Path
+	if !filepath.IsAbs(rootfsPath) {
+		rootfsPath = filepath.Join(cwd, rootfsPath)
 	}
 
 	execFifoPath := filepath.Join(f.StateRootDirectory, f.ContainerID, execFifoFilename)
 	c := &Container{
 		ID:           f.ContainerID,
-		Root:         spec.Root.Path,
+		Root:         rootfsPath,
 		ExecFifoPath: execFifoPath,
 		Spec:         spec,
 		State: specsgo.State{

@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/mrtc0/noic/pkg/container"
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -61,23 +60,20 @@ Where "<container-id>" is your name for instance of the container.
 			return err
 		}
 
-		logrus.Info("Run parent process")
 		if err := c.Run(); err != nil {
 			return fmt.Errorf("run failed: %v", err)
 		}
-		logrus.Info("Save state")
+
 		if err = c.SaveState(); err != nil {
 			return fmt.Errorf("failed save state: %v", err)
 		}
 
-		logrus.Info("Create PID file")
 		if context.IsSet("pid-file") {
 			if err = c.CreatePIDFile(context.String("pid-file")); err != nil {
 				return err
 			}
 		}
 
-		logrus.Info("create is done")
 		return nil
 	},
 }

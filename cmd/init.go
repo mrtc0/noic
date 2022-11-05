@@ -12,13 +12,15 @@ var InitCommand = cli.Command{
 	Name:  "init",
 	Usage: "init container process",
 	Action: func(context *cli.Context) error {
+		logrus.Debug("initializing container")
 		pipe := os.NewFile(uintptr(3), "pipe")
 		defer pipe.Close()
 		err := container.Init(context, pipe)
 		if err != nil {
-			logrus.Errorf("init error: %s", err)
 			return err
 		}
+
+		logrus.Debug("initialized container")
 		return nil
 	},
 }

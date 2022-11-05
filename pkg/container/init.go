@@ -14,11 +14,13 @@ import (
 	"github.com/mrtc0/noic/pkg/container/mount"
 	"github.com/mrtc0/noic/pkg/container/processes"
 	"github.com/mrtc0/noic/pkg/container/seccomp"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/sys/unix"
 )
 
 func Init(ctx *cli.Context, pipe *os.File) error {
+	logrus.Debug("init start")
 	var container *Container
 	if err := json.NewDecoder(pipe).Decode(&container); err != nil {
 		return err
