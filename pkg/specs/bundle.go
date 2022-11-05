@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	specsgo "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 const DefaultSpecConfigFilename = "config.json"
 
-func LoadSpec(specConfigPath string) (*Spec, error) {
-	var spec *Spec
+func LoadSpec(specConfigPath string) (*specsgo.Spec, error) {
+	var spec *specsgo.Spec
 	specConf, err := os.Open(specConfigPath)
 	if err != nil {
 		if os.IsNotExist(err) {

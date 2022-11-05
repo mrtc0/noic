@@ -2,7 +2,6 @@ package cgroups
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"syscall"
 
@@ -27,24 +26,6 @@ type CgroupConfig struct {
 
 	scopePrefix string
 	parent      string
-}
-
-func mountCgroupV1(mountPath string) error {
-	if err := os.MkdirAll(mountPath, 0o755); err != nil {
-		return err
-	}
-
-	flags := defaultMountFlags | syscall.MS_RDONLY
-	return syscall.Mount("cgroup", mountPath, "cgroup", uintptr(flags), "")
-}
-
-func mountCgroupV2(mountPath string) error {
-	if err := os.MkdirAll(mountPath, 0o755); err != nil {
-		return err
-	}
-
-	flags := defaultMountFlags
-	return syscall.Mount("cgroup2", mountPath, "cgroup2", uintptr(flags), "")
 }
 
 func IsVersion2() bool {

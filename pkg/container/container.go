@@ -8,19 +8,22 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/mrtc0/noic/pkg/process"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	gopsutil "github.com/shirou/gopsutil/process"
 )
 
 const execFifoFilename = "exec.fifo"
 
+type InitProcess struct {
+	Pid int `json:"pid"`
+}
+
 type Container struct {
 	ID                 string
 	Root               string
 	ExecFifoPath       string
 	Spec               *specs.Spec
-	InitProcess        *process.InitProcess
+	InitProcess        *InitProcess
 	State              specs.State
 	StateRootDirectory string
 	UseSystemdCgroups  bool
@@ -87,7 +90,7 @@ func (c *Container) Run() error {
 		return fmt.Errorf("failed start parent Process: %s", err)
 	}
 
-	c.InitProcess = &process.InitProcess{Pid: parent.Process.Pid}
+	c.InitProcess = &InitProcess{Pid: parent.Process.Pid}
 	c.State.Pid = parent.Process.Pid
 	c.State.Status = specs.ContainerState(c.CurrentStatus().String())
 

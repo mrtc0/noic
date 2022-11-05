@@ -54,12 +54,6 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 		if err != nil {
 			return fmt.Errorf("failed create cgroup: %s", err)
 		}
-
-		/*
-			if err := manager.Add(uint64(pid)); err != nil {
-				return fmt.Errorf("failed add process to cgroup: %s", err)
-			}
-		*/
 	}
 
 	if container.Spec.Process.Rlimits != nil {
@@ -148,56 +142,3 @@ func readonlyPathMount(paths []string) error {
 
 	return nil
 }
-
-/*
-func setupMount() error {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	if err := syscall.Mount("", "/", "", syscall.MS_REC|syscall.MS_PRIVATE, ""); err != nil {
-		return err
-	}
-
-	if err := syscall.Mount(pwd, pwd, "bind", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
-		return err
-	}
-
-	oldDir := filepath.Join(pwd, ".old")
-	if err = os.Mkdir(oldDir, 0777); err != nil {
-		return err
-	}
-
-	if err := syscall.PivotRoot(pwd, oldDir); err != nil {
-		return err
-	}
-
-	if err := syscall.Chdir("/"); err != nil {
-		return err
-	}
-
-	if err := syscall.Unmount("/.old", syscall.MNT_DETACH); err != nil {
-		return err
-	}
-
-	if err := os.Remove("/.old"); err != nil {
-		return err
-	}
-
-	/*
-		mountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
-		if err := syscall.Mount("proc", "/proc", "proc", uintptr(mountFlags), ""); err != nil {
-			return err
-		}
-		if err := syscall.Mount("sysfs", "/sys", "sysfs", uintptr(mountFlags), ""); err != nil {
-			return err
-		}
-		/*
-			if err := syscall.Mount("tmpfs", "/dev/shm", "tmpfs", uintptr(mountFlags), "mode=1777"); err != nil {
-				return err
-			}
-
-	return nil
-}
-*/
