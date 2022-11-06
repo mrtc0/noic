@@ -12,18 +12,26 @@ import (
 var (
 	mountPropergationFlags = map[string]int{
 		"shared":     syscall.MS_SHARED,
-		"slave":      syscall.MS_SLAVE | syscall.MS_REC,
+		"slave":      syscall.MS_SLAVE,
 		"private":    syscall.MS_PRIVATE,
 		"unbindable": syscall.MS_UNBINDABLE,
-		"":           syscall.MS_PRIVATE | syscall.MS_REC,
+		"":           0,
 	}
 )
 
 func MountRootFs(rootfs string, spec *specsgo.Spec) error {
-	flags, exists := mountPropergationFlags[spec.Linux.RootfsPropagation]
-	if !exists {
-		return fmt.Errorf("invalid rootfsPropagation: %s", spec.Linux.RootfsPropagation)
-	}
+	flags := syscall.MS_SLAVE | syscall.MS_REC
+	/*
+		TODO: Support rootfsMountPropagation
+		mountPropagationFlag, exists := mountPropergationFlags[spec.Linux.RootfsPropagation]
+		if !exists {
+			return fmt.Errorf("invalid rootfsPropagation: %s", spec.Linux.RootfsPropagation)
+		}
+
+		if mountPropagationFlag != 0 {
+			flags = mountPropagationFlag
+		}
+	*/
 
 	pwd, err := os.Getwd()
 	if err != nil {
