@@ -1,6 +1,8 @@
 package container
 
 import (
+	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"syscall"
@@ -43,6 +45,25 @@ func (c Container) NewParentProcess() (*exec.Cmd, *os.File, error) {
 	cmd.Stderr = os.Stderr
 
 	cmd.ExtraFiles = []*os.File{readPipe}
+	if c.Spec.Process.Terminal {
+		conn, err := net.Dial("unix", c.ConsoleSocket)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		uc, ok := conn.(*net.UnixConn)
+		if !ok {
+			return nil, nil, fmt.Errorf("casting to UnixConn failed")
+		}
+
+		socket, err := uc.File()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		cmd.ExtraFiles = append(cmd.ExtraFiles, socket)
+		cmd.Env = append(cmd.Env, "_NOIC_CONSOLE_FD=4")
+	}
 
 	cmd.Dir = c.Root
 	cmd.Env = append(cmd.Env, c.Spec.Process.Env...)

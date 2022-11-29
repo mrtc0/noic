@@ -13,6 +13,7 @@ type ContainerFactory struct {
 	StateRootDirectory string
 	BundlePath         string
 	UseSystemdCgroups  bool
+	ConsoleSocket      string
 }
 
 func (f *ContainerFactory) Create() (*Container, error) {
@@ -64,6 +65,7 @@ func (f *ContainerFactory) Create() (*Container, error) {
 		},
 		StateRootDirectory: f.StateRootDirectory,
 		UseSystemdCgroups:  f.UseSystemdCgroups,
+		ConsoleSocket:      f.ConsoleSocket,
 	}
 
 	return c, nil

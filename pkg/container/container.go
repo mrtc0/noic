@@ -27,6 +27,7 @@ type Container struct {
 	State              specs.State
 	StateRootDirectory string
 	UseSystemdCgroups  bool
+	ConsoleSocket string
 }
 
 func Exists(stateRootDirectory, containerID string) bool {

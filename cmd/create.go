@@ -26,6 +26,11 @@ Where "<container-id>" is your name for instance of the container.
 			Value: "",
 			Usage: "specify the file to write the process id to",
 		},
+		cli.StringFlag{
+			Name:  "console-socket",
+			Value: "",
+			Usage: "path to an AF_UNIX socket which will receive a file descriptor referencing the master end of the console's pseudoterminal",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
@@ -53,6 +58,7 @@ Where "<container-id>" is your name for instance of the container.
 			StateRootDirectory: stateRootDirectory,
 			BundlePath:         bundlePath,
 			UseSystemdCgroups:  useSystemdCgroups,
+			ConsoleSocket:      context.String("console-socket"),
 		}
 
 		c, err := factory.Create()

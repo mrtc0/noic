@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"syscall"
 
 	"github.com/mrtc0/noic/pkg/container/apparmor"
@@ -66,6 +67,21 @@ func Init(ctx *cli.Context, pipe *os.File) error {
 
 	if err := mount.MountRootFs(container.Root, container.Spec); err != nil {
 		return err
+	}
+
+	if container.Spec.Process.Terminal {
+		if envConsole := os.Getenv("_NOIC_CONSOLE_FD"); envConsole != "" {
+			console, err := strconv.Atoi(envConsole)
+			if err != nil {
+				return fmt.Errorf("unable to convert _LIBCONTAINER_CONSOLE: %w", err)
+			}
+			consoleSocket := os.NewFile(uintptr(console), "console-socket")
+			defer consoleSocket.Close()
+
+			if err := processes.SetupConsole(consoleSocket); err != nil {
+				return err
+			}
+		}
 	}
 
 	if err := readonlyPathMount(container.Spec.Linux.ReadonlyPaths); err != nil {
